@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Jquery -->
+<script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+
+<!-- Bootstrap -->
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+<!-- Webfont -->
+<link href='https://fonts.googleapis.com/css?family=PT+Serif:400,700,700italic,400italic' rel='stylesheet' type='text/css'>
+
+<style type="text/css">
+  body {
+    font-family: 'PT Serif', 'Georgia', serif;
+  }
+
+  .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+  }
+
+  .highlight {
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+    font-size: 3em;
+  }
+  .highlight small {
+    display: block;
+    color: #666;
+    font-size: 0.33em;
+  }
+
+  .highlight.u5, .color-u5 {
+    background-color: #BDE5F8;
+  }
+  .highlight.u10, .color-u10 {
+    background-color: #DFF2BF;
+  }
+  .highlight.u15, .color-u15 {
+    background-color: #FEEFB3;
+  }
+  .highlight.u20, .color-u20 {
+    background-color: #FFBABA;
+  }
+
+  .label-dark {
+    color: #000;
+  }
+</style>
+
+<script type="text/javascript">
+  // function for outputting a range of characters
+  function range(first, last) {
+      var a = first.charCodeAt(0)
+      var b = last.charCodeAt(0) + 1
+      return Array.apply(null, {length: Math.abs(b - a)})
+        .map(function (x,i) { return String.fromCharCode(Math.min(a, b) + i) });
+  }
+
+  // store all ascii chars for comparison
+  var allPossibleChars = range(' ','~');
+
+  // rules defaults
+  var halfUnit = "";
+  var oneUnit = "";
+  var oneAndHalfUnit = "";
+  var twoUnit = "";
+
+  // onload
+  $(function(){
+
+    // load rules from localstorage if available
+    if (localStorage["halfUnit"]) {
+      halfUnit = localStorage["halfUnit"];
+      oneUnit = localStorage["oneUnit"];
+      oneAndHalfUnit = localStorage["oneAndHalfUnit"];
+      twoUnit = localStorage["twoUnit"];
+      checkRules();
+      displayRules();
+      $("#rulesHeader").html("Rules <small><button onClick='clearLocalStorage()'>Reset Changes</button></small>");
+    } else {
+      setRuleDefaults();
+    }
+
+    // handle keyup
+    $('#headline').keyup(function(){
+      countHeadline($(this));
+    });
+
+    // count just in case
+    countHeadline($('#headline'));
+
+    // handle rule change
+    $('#halfUnit').keyup(function(){
+      if (halfUnit != $(this).val()) {
+        halfUnit = $(this).val();
+        checkRules();
+        countHeadline($('#headline'));
+        setLocalStorage();
+      }
+    });
+    $('#oneUnit').keyup(function(){
+      if (oneUnit != $(this).val()) {
+        oneUnit = $(this).val();
+        checkRules();
+        countHeadline($('#headline'));
+        setLocalStorage();
+      }
+    });
+    $('#oneAndHalfUnit').keyup(function(){
+      if (oneAndHalfUnit != $(this).val()) {
+        oneAndHalfUnit = $(this).val()
+        checkRules();;
+        countHeadline($('#headline'));
+        setLocalStorage();
+      }
+    });
+    $('#twoUnit').keyup(function(){
+      if (twoUnit != $(this).val()) {
+        twoUnit = $(this).val();
+        checkRules();
+        countHeadline($('#headline'));
+        setLocalStorage();
+      }
+    });
+
+  });
+
+  function setLocalStorage(){
+    localStorage["halfUnit"] = halfUnit;
+    localStorage["oneUnit"] = oneUnit;
+    localStorage["oneAndHalfUnit"] = oneAndHalfUnit;
+    localStorage["twoUnit"] = twoUnit;
+    $("#rulesHeader").html("Rules <small><button onClick='clearLocalStorage()'>Reset Changes</button></small>");
+  }
+
+  function clearLocalStorage(){
+    localStorage.clear();
+    setRuleDefaults();
+    $("#rulesHeader").html("Rules <small>(any changes will be saved)</small>");
+  }
+
+  function setRuleDefaults(){
+    halfUnit = " flitjIL1,./<>?;:'\"[]{}\\|`~!@#$%^&*()-_=+";
+    oneUnit = "abcdeghkmnopqrsuvwxyz023456789";
+    oneAndHalfUnit = "ABCDEFGHJKNOPQRSTUVXYZ";
+    twoUnit = "MW";
+    checkRules();
+    displayRules();
+  }
+
+  function displayRules(){
+    // display rules
+    $('#halfUnit').val(halfUnit);
+    $('#oneUnit').val(oneUnit);
+    $('#oneAndHalfUnit').val(oneAndHalfUnit);
+    $('#twoUnit').val(twoUnit);
+  }
+
+  // check to see if there is any overlap (or missing chars) in rules
+  function checkRules(){
+    var allCharsArray = (halfUnit+oneUnit+oneAndHalfUnit+twoUnit).split('');
+
+    var sorted_arr = allCharsArray.sort();
+
+    var alerts = [];
+    for (var i = 0; i < sorted_arr.length - 1; i++) {
+        if (sorted_arr[i + 1] == sorted_arr[i]) {
+            alerts.push(sorted_arr[i]);
+        }
+    }
+
+    // display duplicated letters
+    alertOutput = "";
+    if (alerts.length > 0){
+      alertsText = "";
+      $.each(alerts, function(i, c){
+        alertsText += "<span class='label label-danger'>"+c+"</span>&nbsp;";
+      });
+      alertOutput += "<div><b>Warning, duplicated letters:</b> "+alertsText+"</div>";
+    }
+
+    // check for missing chars
+    var missing = [];
+    $.each(allPossibleChars, function (i, c) {
+      if (allCharsArray.indexOf(c) == -1) {
+        missing.push(c)
+      }
+    });
+
+    // display missing letters
+    if (missing.length > 0){
+      missingText = "";
+      $.each(missing, function(i, c){
+        missingText += "<span class='label label-warning'>"+c+"</span>&nbsp;";
+      });
+      alertOutput += "<div><b>Warning, missing letters:</b> "+missingText+"</div>";
+    }
+
+    $('#formErrors').html(alertOutput);
+
+  }
+
+  // do the count
+  function countHeadline(element){
+    value = element.val();
+
+    // calculate
+    var valueArray = value.split('');
+    var outputArray = [];
+    $.each(valueArray, function (i, c) {
+        if (halfUnit.indexOf(c) != -1) {
+          outputArray.push({cha: c, val: 0.5});
+        }
+        else if (oneUnit.indexOf(c) != -1) {
+          outputArray.push({cha: c, val: 1});
+        }
+        else if (oneAndHalfUnit.indexOf(c) != -1) {
+          outputArray.push({cha: c, val: 1.5});
+        }
+        else if (twoUnit.indexOf(c) != -1) {
+          outputArray.push({cha: c, val: 2});
+        }
+    });
+
+    // display
+    var output = "";
+    var count = 0;
+    $.each(outputArray, function(i, o){
+      // replace spaces with nbsp
+      if (o['cha'] == ' ') {
+        cha = "&nbsp";
+      } else {
+        cha = o['cha'];
+      }
+
+      output += "<span class='highlight u"+o['val']*10+"'>"+cha+"<small>"+o['val']+"</small></span>";
+      count += o['val'];
+    });
+
+    $('#output').html(output);
+    $('#count').html("Count: "+count);
+  }
+
+</script>
+</head>
+<body>
+
+
+<div class="container-fluid">
+  <div class="col-sm-9">
+    <h1>FLITJ Headline Count Tool</h1>
+
+    <p>
+      <input type="text" placeholder="Type your headline here." id="headline" class="form-control" />
+    </p>
+
+    <p id="output"></p>
+
+    <h2><span class="label label-default" id="count"></span></h2>
+  </div>
+  <div class="col-sm-3">
+    <h3>Key</h3>
+    <p>
+      <span class="label label-dark color-u5">0.5 units</span>
+      <span class="label label-dark color-u10">1 unit</span>
+      <span class="label label-dark color-u15">1.5 units</span>
+      <span class="label label-dark color-u20">2 units</span>
+    </p>
+
+    <h3 id="rulesHeader">Rules <small>(any changes will be saved)</small></h3>
+    <form role="form">
+      <div class="form-group">
+        <label>0.5 units <small>(note space at beginning)</small></label><br/>
+        <input class="form-control" type="text" id="halfUnit" />
+      </div>
+      <div class="form-group">
+        <label>1 unit</label><br/>
+        <input class="form-control" type="text" id="oneUnit" />
+      </div>
+      <div class="form-group">
+        <label>1.5 units</label><br/>
+        <input class="form-control" type="text" id="oneAndHalfUnit" />
+      </div>
+      <div class="form-group">
+        <label>2 units</label><br/>
+        <input class="form-control" type="text" id="twoUnit" />
+      </div>
+    </form>
+
+    <p id="formErrors"></p>
+  </div>
+</div>
+
+</body>
+</html>
